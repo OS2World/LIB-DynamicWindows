@@ -1,0 +1,107 @@
+#
+# Get our source directory
+#
+VER = 11
+VERDOT = 1.1
+
+!if "$(DWINDOWS_SRCDIR)" == ""
+SRCDIR=.
+!else
+SRCDIR=$(DWINDOWS_SRCDIR)
+!endif
+
+FXLIBDIR=.\lib
+FXDLLDIR=.\dll
+
+!if "$(DEBUG)" == "Y"
+CFLAGS_DEBUG = -Z7 -Od # was -Zi
+LINK_DEBUG = -debug:full
+!else
+CFLAGS_DEBUG = -Ox
+LINK_DEBUG = -release
+!endif
+
+CC = cl
+CFLAGS = -c -G5 -GD -Zp1 -DWIN32 -D__WIN32__ -DMSVC -DBUILD_DLL -I$(SRCDIR)\platform -I$(SRCDIR)
+#CFLAGS_COMPILE = -MTd
+CFLAGS_COMPILE = -MD
+LIBS = wsock32.lib kernel32.lib user32.lib comctl32.lib gdi32.lib advapi32.lib shell32.lib comdlg32.lib ole32.lib oleaut32.lib
+RES =
+LINKFLAGS = -machine:i386 $(LINK_DEBUG)
+DLLLINKFLAGS = -dll
+LINK = link
+DEFFILE = $(SRCDIR)\dww.def
+DEFFILE2 = $(SRCDIR)\dwcompatw.def
+
+OBJS = dw.obj browser.obj XBrowseForFolder.obj
+
+OBJS2 = compat.obj dirent.obj
+
+all: dw dwcompat dwtest
+
+clean:
+	-erase *.dll
+        -erase *.exe
+        -erase *.opt
+        -erase *.lib
+        -erase *.obj
+        -erase *.map
+        -erase *.pdb
+        -erase *.ilk
+        -erase *.exp
+        -erase *~
+
+dw: dw.dll
+
+dw.dll: $(OBJS) $(DEFFILE)
+	-mkdir $(FXLIBDIR)
+	-mkdir $(FXDLLDIR)
+	$(LINK) @<<
+-out:$(@) -def:$(DEFFILE)
+$(LINKFLAGS) $(DLLLINKFLAGS)
+$(OBJS) $(RES)
+$(LIBS)
+<<
+	lib /def:$(DEFFILE) /out:dw.lib
+        copy dw.lib $(FXLIBDIR)\dw.lib
+        copy dw.dll $(FXDLLDIR)\dw.dll
+
+dwcompat: dwcompat.dll
+
+dwcompat.dll: $(OBJS2) $(DEFFILE2)
+	$(LINK) @<<
+-out:$(@) -def:$(DEFFILE2)
+$(LINKFLAGS) $(DLLLINKFLAGS)
+$(OBJS2) $(RES)
+$(LIBS)
+<<
+	lib /def:$(DEFFILE2) /out:dwcompat.lib
+        copy dwcompat.lib $(FXLIBDIR)\dwcompat.lib
+        copy dwcompat.dll $(FXDLLDIR)\dwcompat.dll
+
+dw.obj: $(SRCDIR)\win\dw.c
+	$(CC) $(CFLAGS) $(CFLAGS_DEBUG) $(CFLAGS_COMPILE) $(SRCDIR)\win\dw.c
+
+browser.obj: $(SRCDIR)\win\browser.c
+	$(CC) $(CFLAGS) $(CFLAGS_DEBUG) $(CFLAGS_COMPILE) $(SRCDIR)\win\browser.c
+
+XBrowseForFolder.obj: $(SRCDIR)\win\XBrowseForFolder.cpp
+	$(CC) $(CFLAGS) $(CFLAGS_DEBUG) $(CFLAGS_COMPILE) $(SRCDIR)\win\XBrowseForFolder.cpp
+
+dirent.obj: $(SRCDIR)\win\dirent.c
+	$(CC) $(CFLAGS) $(CFLAGS_DEBUG) $(CFLAGS_COMPILE) $(SRCDIR)\win\dirent.c
+
+compat.obj: $(SRCDIR)\compat.c
+	$(CC) $(CFLAGS) $(CFLAGS_DEBUG) $(CFLAGS_COMPILE) $(SRCDIR)\compat.c
+
+dwtest.obj: $(SRCDIR)\dwtest.c
+	$(CC) $(CFLAGS) $(CFLAGS_DEBUG) $(CFLAGS_COMPILE) $(SRCDIR)\dwtest.c
+
+dwtest: dwtest.exe
+
+dwtest.exe: dwtest.obj winmain.obj
+	$(LINK) $(LINKFLAGS) /out:dwtest.exe dwtest.obj winmain.obj /subsystem:windows $(FXLIBDIR)\dwcompat.lib $(FXLIBDIR)\dw.lib $(LIBS)
+
+zip: dw.dll
+	copy win\readme-win.txt .
+	zip dwindows-win32-$(VERDOT).zip readme-win.txt dw.dll dwcompat.dll dw.lib dwcompat.lib dw.h
