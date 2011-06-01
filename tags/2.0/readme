@@ -1,0 +1,69 @@
+This is a stable release of Dynamic Windows version 2.0.0.
+
+The current Dynamic Windows source base is stable on
+OS/2, Windows, Linux, FreeBSD and Solaris.  The Mac (Cocoa)
+version appears stable but has not undergone harsh testing.
+
+Known problems:
+
+Boxes with no expandable items will have their contents centered on 
+    GTK instead of top or left justified on the other platforms.
+MDI does not work on GTK3 and is not implemented the same on Mac.
+    At this time we cannot recommend using MDI in new code,
+    but it will be supported for existing code on OS/2, Win and GTK2.
+    If support for MDI improves on GTK3/Mac this status may change.
+
+Known limitations:
+
+It is not safe on all platforms to operate on widgets before they
+are packed.  For portability pack widgets before operating on them.
+
+On Windows a slider control will only work properly if it is the
+only slider in a box.  If there is more than one slider control 
+in a box then signals may get misdirected to the wrong control.
+
+On Unix (GTK) the window manager border is not a constant value
+so environment variables DW_BORDER_WIDTH and DW_BORDER_HEIGHT
+are used for proper positioning.
+
+On Mac if performing Dynamic Windows operations on secondary 
+threads which do not terminate, it may be required to call
+a Mac specific DW function _dw_pool_drain() at the end of the
+thread's loop to prevent memory leaks.
+
+Future features:
+
+OS/2 is currently missing the Calendar and HTML widgets because
+the system does not support them by default. Looking into writing
+custom ones or importing functionality from available libraries.
+
+Changes from version 1.1:
+Added support for MacOS 10.5 and higher Intel and PPC via Cocoa.
+Added initial (unstable) support for GTK version 3.
+Added support for Windows themes on XP and higher.
+Added scrollbox widgets, which function like boxes but...
+    scrollbars allow you to pack more into them than the visible area.
+Added dw_window_get_font() for checking the font used on a widget.
+Added dw_container_change_row_title() for changing a row pointer after insert.
+Added clipboard support on OS/2.
+Added HICN data type for icon handles and changed icon functions to use it.
+Added DW_RESOURCE() macro for casting to HICN when using resource IDs.
+Added support for borderless buttons except on Windows (DW_BS_NOBORDER).
+Changed the return codes of dw_container_setup, dw_filesystem_setup and
+    dw_event_wait().  Please check any code that use these functions.
+Changed GTK2+ now supports font name styles like the other platforms.
+Enhanced transparent bitblt on OS/2 and Windows.  OS/2 now supports
+	transparent color and Windows now supports 32bit alpha bitblt.
+Removed thread limits on Windows and GTK using thread local storage.
+
+Dynamic Windows Documentation is available at:
+
+http://dbsoft.org/dw_help.php
+
+If you have any questions or suggestions feel free to email me at:
+
+brian@dbsoft.org
+
+Thanks!
+
+Brian Smith

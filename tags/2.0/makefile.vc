@@ -1,0 +1,133 @@
+#
+# Visual C Makefile for Dynamic Windows
+#
+VER = 20
+VERDOT = 2.0
+
+#
+# Setup the source and destination directories
+#
+!if "$(DWINDOWS_SRCDIR)" == ""
+SRCDIR=.
+!else
+SRCDIR=$(DWINDOWS_SRCDIR)
+!endif
+
+!if "$(DWLIBDIR)" == ""
+DWLIBDIR=.\lib
+!endif
+
+!if "$(DWDLLDIR)" == ""
+DWDLLDIR=.\dll
+!endif
+
+#
+# Configure settings for the target platform
+#	Default to x86 if not specified
+#
+!if "$(TARGET_CPU)" == ""
+TARGET_CPU=x86
+!endif
+
+!if "$(TARGET_CPU)" == "x86"
+PLATFORM_DEF = -DWIN32
+!else
+PLATFORM_DEF = -DWIN64
+!endif
+
+#
+# Settings for either debug or release
+#
+!if "$(DEBUG)" == "Y"
+CFLAGS_DEBUG = -DDEBUG -Z7 -Od -MTd # was -Zi
+LINK_DEBUG = -debug
+!else
+CFLAGS_DEBUG = -Ox -MT
+LINK_DEBUG = -release
+!endif
+
+CC = cl
+CFLAGS = -c $(PLATFORM_DEF) -D__WIN32__ -DMSVC -DBUILD_DLL -I$(SRCDIR)\platform -I$(SRCDIR)
+LIBS = wsock32.lib kernel32.lib user32.lib comctl32.lib gdi32.lib advapi32.lib shell32.lib comdlg32.lib ole32.lib oleaut32.lib userenv.lib msimg32.lib
+RES =
+LINKFLAGS = -machine:$(TARGET_CPU) -manifest $(LINK_DEBUG)
+DLLLINKFLAGS = -dll
+LINK = link
+DEFFILE = $(SRCDIR)\dww.def
+DEFFILE2 = $(SRCDIR)\dwcompatw.def
+
+OBJS = dw.obj browser.obj XBrowseForFolder.obj
+
+OBJS2 = compat.obj dirent.obj
+
+all: dw dwcompat dwtest
+
+clean:
+	-erase *.dll
+        -erase *.exe
+        -erase *.opt
+        -erase *.lib
+        -erase *.obj
+        -erase *.map
+        -erase *.pdb
+        -erase *.ilk
+        -erase *.exp
+        -erase *~
+
+dw: dw.dll
+
+dw.dll: $(OBJS) $(DEFFILE)
+	-mkdir $(DWLIBDIR)
+	-mkdir $(DWDLLDIR)
+	$(LINK) @<<
+-out:$(@) -def:$(DEFFILE)
+$(LINKFLAGS) $(DLLLINKFLAGS)
+$(OBJS) $(RES)
+$(LIBS)
+<<
+	lib /def:$(DEFFILE) /out:dw.lib
+	mt.exe /manifest dw.dll.manifest win\dw.dll.$(TARGET_CPU).manifest /outputresource:dw.dll;2
+        copy dw.lib $(DWLIBDIR)\dw.lib
+        copy dw.dll $(DWDLLDIR)\dw.dll
+
+dwcompat: dwcompat.dll
+
+dwcompat.dll: $(OBJS2) $(DEFFILE2)
+	$(LINK) @<<
+-out:$(@) -def:$(DEFFILE2)
+$(LINKFLAGS) $(DLLLINKFLAGS)
+$(OBJS2) $(RES)
+$(LIBS)
+<<
+	lib /def:$(DEFFILE2) /out:dwcompat.lib
+	mt.exe /manifest dwcompat.dll.manifest /outputresource:dwcompat.dll;2
+        copy dwcompat.lib $(DWLIBDIR)\dwcompat.lib
+        copy dwcompat.dll $(DWDLLDIR)\dwcompat.dll
+
+dw.obj: $(SRCDIR)\win\dw.c
+	$(CC) $(CFLAGS) $(CFLAGS_DEBUG) $(SRCDIR)\win\dw.c
+
+browser.obj: $(SRCDIR)\win\browser.c
+	$(CC) $(CFLAGS) $(CFLAGS_DEBUG) $(SRCDIR)\win\browser.c
+
+XBrowseForFolder.obj: $(SRCDIR)\win\XBrowseForFolder.cpp
+	$(CC) $(CFLAGS) $(CFLAGS_DEBUG) $(SRCDIR)\win\XBrowseForFolder.cpp
+
+dirent.obj: $(SRCDIR)\win\dirent.c
+	$(CC) $(CFLAGS) $(CFLAGS_DEBUG) $(SRCDIR)\win\dirent.c
+
+compat.obj: $(SRCDIR)\compat.c
+	$(CC) $(CFLAGS) $(CFLAGS_DEBUG) $(SRCDIR)\compat.c
+
+dwtest.obj: $(SRCDIR)\dwtest.c
+	$(CC) $(CFLAGS) $(CFLAGS_DEBUG) $(SRCDIR)\dwtest.c
+
+dwtest: dwtest.exe
+
+dwtest.exe: dwtest.obj winmain.obj
+	$(LINK) $(LINKFLAGS) /out:dwtest.exe dwtest.obj winmain.obj /subsystem:windows $(DWLIBDIR)\dwcompat.lib $(DWLIBDIR)\dw.lib $(LIBS)
+	mt.exe /manifest dwtest.exe.manifest win\dwtest.exe.$(TARGET_CPU).manifest /outputresource:dwtest.exe;1
+
+zip: dw.dll
+	copy win\readme-win.txt .
+	zip dwindows-win32-$(VERDOT).zip readme-win.txt readme dw.dll dwcompat.dll dw.lib dwcompat.lib dw.h

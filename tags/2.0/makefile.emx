@@ -1,0 +1,62 @@
+# $Id$
+
+# Dynamic Windows EMX Makefile
+
+CC = gcc
+RM = rm -f
+RC = rc
+MAKE = make
+COMPRESS = lxlite
+VER = 11
+VERDOT = 2.0
+
+DEFS =
+LIBS =
+
+CFLAGS = -O -g -Zomf -Zmt -D__OS2__ -D__ST_MT_ERRNO__ -I. -Wall -o $(@)
+LDFLAGS = -Zdll -Zcrtdll
+RCFLAGS = -r
+
+
+COMPATOBJECTS = compat.obj dirent.obj
+COMPATSOURCES = compat.c dirent.c
+
+all: dw.dll dwcompat.dll dwtest.exe
+
+dw.dll:  os2\dw.c dw.def
+	$(CC) $(CFLAGS) $(DEFS) -o dw.dll os2/dw.c $(LDFLAGS) dw.def
+
+dw.lib: dw.def
+	emximp -o dw.lib dw.def
+	copy dw.dll dll
+	copy dw.lib lib
+
+dwcompat.dll:  $(COMPATOBJECTS) dwcompat.def
+	$(CC) $(CFLAGS) $(DEFS) -o dwcompat.dll $(COMPATOBJECTS) $(LDFLAGS) -lsocket dwcompat.def
+
+dwcompat.lib: dwcompat.def
+	emximp -o dwcompat.lib dwcompat.def
+	copy dwcompat.dll dll
+	copy dwcompat.lib lib
+
+dwtest.exe: dwtest.o dw.lib dwcompat.lib
+	$(CC) $(CFLAGS) -Zcrtdll -Zomf -Zmt -o dwtest.exe dwtest.o -Llib -ldw -ldwcompat dwtest.def
+
+clean:
+	$(RM) $(OBJECTS) dwtest.exe
+
+dw.obj: dw.c
+	$(CC) $(CFLAGS) -c $<	
+
+compat.obj: compat.c
+	$(CC) $(CFLAGS) -c $<	
+
+dirent.obj: os2/dirent.c
+	$(CC) $(CFLAGS) -c $<	
+
+dwtest.obj: dwtest.c
+	$(CC) $(CFLAGS) -c $<	
+
+zip: dw.dll
+	copy os2\readme-os2.txt .
+	zip dwindows-os2-$(VERDOT).zip readme-os2.txt readme dw.dll dwcompat.dll dw.lib dwcompat.lib dw.h
