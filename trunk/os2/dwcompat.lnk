@@ -1,0 +1,28 @@
+option DESCRIPTION 'Dynamic Windows Compatibility Module for OS/2'
+segment type DATA NONSHARED LOADONCALL
+
+export makedir.20
+export vargs.21
+export setfileinfo.22
+export drivefree.23
+export isdrive.24
+export drivesize.25
+export getfsname.26
+
+export _opendir.30
+export _openxdir.31
+export _readdir.32
+export _seekdir.33
+export _telldir.34
+export _closedir.35
+
+export fsopen.40
+export fsclose.41
+export fsgets.42
+export fsseek.43
+
+export locale_init.50
+export locale_string.51
+
+export nice_strformat.60
+export initdir.61

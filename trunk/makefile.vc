@@ -1,0 +1,161 @@
+#
+# Visual C Makefile for Dynamic Windows
+#
+!include Version
+VER = $(DW_MAJOR_VERSION)$(DW_MINOR_VERSION)
+VERDOT = $(DW_MAJOR_VERSION).$(DW_MINOR_VERSION)
+VERREV = 0
+
+#
+# Setup the source and destination directories
+#
+!if "$(DWINDOWS_SRCDIR)" == ""
+SRCDIR=.
+!else
+SRCDIR=$(DWINDOWS_SRCDIR)
+!endif
+
+!if "$(DWLIBDIR)" == ""
+DWLIBDIR=.\lib
+!endif
+
+!if "$(DWDLLDIR)" == ""
+DWDLLDIR=.\dll
+!endif
+
+#
+# Configure settings for the target platform
+#	Default to x86 if not specified
+#
+!if "$(TARGET_CPU)" == ""
+TARGET_CPU=x86
+!endif
+
+!if "$(TARGET_CPU)" == "x86"
+PLATFORM_DEF = -DWIN32
+PLATFORM_NAME = win32
+!else
+PLATFORM_DEF = -DWIN64
+PLATFORM_NAME = win64
+!endif
+
+#
+# Settings for either debug or release
+#
+!if "$(DEBUG)" == "Y"
+# -D_CRT_SECURE_NO_WARNINGS disables unsafe string function warnings
+# These can be perfectly safe if used properly but get enabled by -W3
+CFLAGS_DEBUG = -DDEBUG -Z7 -W3 -Od -MTd -D_CRT_SECURE_NO_WARNINGS # was -Zi
+LINK_DEBUG = -debug
+!else
+CFLAGS_DEBUG = -Ox -MT
+LINK_DEBUG = -release
+!endif
+
+# Check the SVN revision number if possible
+!if ![subwcrev . win\__SVN__.REV SVN.REV > NUL]
+!include SVN.REV
+!message Revision is [$(VERREV)]
+SVNVERSION=-DVER_REV=$(VERREV)
+!else
+
+# Check the Mercurial revision number if possible
+!if ![hg log -r . --template="VER_REV={rev}" > HG.REV]
+!include HG.REV
+!message Revision is [$(VER_REV)]
+SVNVERSION=-DVER_REV=$(VER_REV)
+!endif
+
+!endif
+
+CC = cl
+CFLAGS = -c $(PLATFORM_DEF) -D__WIN32__ -DMSVC -DTOOLBAR -DGDIPLUS -DAEROGLASS -D_UNICODE -DUNICODE -DBUILD_DLL -DISOLATION_AWARE_ENABLED=1 -I$(SRCDIR)\platform -I$(SRCDIR) $(SVNVERSION)
+LIBS = wsock32.lib kernel32.lib user32.lib comctl32.lib gdi32.lib advapi32.lib shell32.lib comdlg32.lib ole32.lib oleaut32.lib userenv.lib msimg32.lib gdiplus.lib
+RES =
+LINKFLAGS = -machine:$(TARGET_CPU) -manifest $(LINK_DEBUG)
+DLLLINKFLAGS = -dll
+LINK = link
+DEFFILE = $(SRCDIR)\win\dw.def
+DEFFILE2 = $(SRCDIR)\win\dwcompat.def
+
+OBJS = dw.obj browser.obj XBrowseForFolder.obj
+
+OBJS2 = dwcompat.obj dirent.obj
+
+all: dw dwcompat dwtest
+
+
+
+clean:
+        -erase *.dll
+        -erase *.exe
+        -erase *.opt
+        -erase *.lib
+        -erase *.obj
+        -erase *.map
+        -erase *.pdb
+        -erase *.ilk
+        -erase *.exp
+        -erase *.REV
+        -erase *~
+
+dw: dw.dll
+
+dw.dll: $(OBJS) $(DEFFILE)
+	-md $(DWLIBDIR)
+	-md $(DWDLLDIR)
+	$(LINK) @<<
+-out:$(@) -def:$(DEFFILE)
+$(LINKFLAGS) $(DLLLINKFLAGS)
+$(OBJS) $(RES)
+$(LIBS)
+<<
+	lib /def:$(DEFFILE) /out:dw.lib
+	mt.exe /manifest dw.dll.manifest win\dw.dll.$(TARGET_CPU).manifest /outputresource:dw.dll;2
+	-erase dw.dll.manifest
+        copy dw.lib $(DWLIBDIR)\dw.lib
+        copy dw.dll $(DWDLLDIR)\dw.dll
+
+dwcompat: dwcompat.dll
+
+dwcompat.dll: $(OBJS2) $(DEFFILE2)
+	$(LINK) @<<
+-out:$(@) -def:$(DEFFILE2)
+$(LINKFLAGS) $(DLLLINKFLAGS)
+$(OBJS2) $(RES)
+$(LIBS)
+<<
+	lib /def:$(DEFFILE2) /machine:$(TARGET_CPU) /out:dwcompat.lib
+	mt.exe /manifest dwcompat.dll.manifest /outputresource:dwcompat.dll;2
+	-erase dwcompat.dll.manifest
+        copy dwcompat.lib $(DWLIBDIR)\dwcompat.lib
+        copy dwcompat.dll $(DWDLLDIR)\dwcompat.dll
+
+dw.obj: $(SRCDIR)\win\dw.c
+	$(CC) $(CFLAGS) $(CFLAGS_DEBUG) $(SRCDIR)\win\dw.c
+
+browser.obj: $(SRCDIR)\win\browser.c
+	$(CC) $(CFLAGS) $(CFLAGS_DEBUG) $(SRCDIR)\win\browser.c
+
+XBrowseForFolder.obj: $(SRCDIR)\win\XBrowseForFolder.cpp
+	$(CC) $(CFLAGS) $(CFLAGS_DEBUG) $(SRCDIR)\win\XBrowseForFolder.cpp
+
+dirent.obj: $(SRCDIR)\win\dirent.c
+	$(CC) $(CFLAGS) $(CFLAGS_DEBUG) $(SRCDIR)\win\dirent.c
+
+dwcompat.obj: $(SRCDIR)\dwcompat.c
+	$(CC) $(CFLAGS) $(CFLAGS_DEBUG) $(SRCDIR)\dwcompat.c
+
+dwtest.obj: $(SRCDIR)\dwtest.c
+	$(CC) $(CFLAGS) $(CFLAGS_DEBUG) $(SRCDIR)\dwtest.c
+
+dwtest: dwtest.exe
+
+dwtest.exe: dwtest.obj winmain.obj
+	$(LINK) $(LINKFLAGS) /out:dwtest.exe dwtest.obj winmain.obj /subsystem:windows $(DWLIBDIR)\dwcompat.lib $(DWLIBDIR)\dw.lib $(LIBS)
+	mt.exe /manifest dwtest.exe.manifest win\dwtest.exe.$(TARGET_CPU).manifest /outputresource:dwtest.exe;1
+	-erase dwtest.exe.manifest
+
+zip: dw.dll
+	copy win\readme-win.txt .
+	zip dwindows-$(PLATFORM_NAME)-$(VERDOT).zip readme-win.txt readme.txt dw.dll dwcompat.dll dw.lib dwcompat.lib dw.h dwcompat.h

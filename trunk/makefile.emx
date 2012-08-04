@@ -1,0 +1,65 @@
+# $Id$
+
+# Dynamic Windows EMX Makefile
+
+CC = gcc
+RM = rm -f
+RC = rc
+MAKE = make
+COMPRESS = lxlite
+include Version
+VER = $(DW_MAJOR_VERSION)$(DW_MINOR_VERSION)
+VERDOT = $(DW_MAJOR_VERSION).$(DW_MINOR_VERSION)
+AVERREV := $(shell os2\svnrev.cmd)
+include SVN.REV
+
+DEFS =
+LIBS =
+
+CFLAGS = -O -g -Zomf -Zmt -D__OS2__ -D__ST_MT_ERRNO__ -DUNICODE -DVER_REV=$(VERREV) -I. -Wall -o $(@)
+LDFLAGS = -Zdll -static-libgcc
+RCFLAGS = -r
+
+
+COMPATOBJECTS = dwcompat.obj dirent.obj
+COMPATSOURCES = dwcompat.c dirent.c
+
+all: dw.dll dwcompat.dll dwtest.exe
+
+dw.dll:  os2\dw.c os2\dw.def
+	$(CC) $(CFLAGS) $(DEFS) -o dw.dll os2/dw.c $(LDFLAGS) os2/dw.def
+
+dw.lib: os2\dw.def
+	emximp -o dw.lib os2\dw.def
+	copy dw.dll dll
+	copy dw.lib lib
+
+dwcompat.dll:  $(COMPATOBJECTS) os2\dwcompat.def
+	$(CC) $(CFLAGS) $(DEFS) -o dwcompat.dll $(COMPATOBJECTS) $(LDFLAGS) -lsocket os2/dwcompat.def
+
+dwcompat.lib: os2\dwcompat.def
+	emximp -o dwcompat.lib os2\dwcompat.def
+	copy dwcompat.dll dll
+	copy dwcompat.lib lib
+
+dwtest.exe: dwtest.o dw.lib dwcompat.lib
+	$(CC) $(CFLAGS) -Zomf -Zmt -static-libgcc -Zlinker /pm:pm -o dwtest.exe dwtest.o -Llib -ldw -ldwcompat os2/dwtest.def
+
+clean:
+	$(RM) *.obj *.o *.lib *.res *~ dwtest.exe dw.dll dwcompat.dll SVN.REV
+
+dw.obj: dw.c
+	$(CC) $(CFLAGS) -c $<	
+
+dwcompat.obj: dwcompat.c
+	$(CC) $(CFLAGS) -c $<	
+
+dirent.obj: os2/dirent.c
+	$(CC) $(CFLAGS) -c $<	
+
+dwtest.obj: dwtest.c
+	$(CC) $(CFLAGS) -c $<	
+
+zip: dw.dll
+	copy os2\readme-os2.txt .
+	zip dwindows-os2-$(VERDOT).zip readme-os2.txt readme.txt dw.dll dwcompat.dll dw.lib dwcompat.lib dw.h dwcompat.h

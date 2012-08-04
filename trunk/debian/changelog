@@ -1,0 +1,185 @@
+dwindows (2.4-1) unstable; urgency=low
+
+  * Added dw_menu_delete_item() for removing menu items.
+    Now you can use dw_window_destroy() on menu items handles also.
+  * Renamed compat.c and compat.h to dwcompat.c and dwcompat.h respectively.
+  * Added support for MacOS 10.8 Mountain Lion.
+  * Added fullscreen support on Mac for resizable windows on Lion.
+  * Added UNICODE build mode on Windows allowing UTF-8 encoded text.
+    ANSI builds are supported by removing -DUNICODE -D_UNICODE and -DAEROGLASS
+  * Added support for antialiased drawing on Windows via GDI+.
+  * Added UNICODE build mode on OS/2 using codepage 1208 (UTF-8) as the 
+    active codepage; Non-Unicode mode will use the default codepage.
+  * Added support for Control-Click on Mac for button press events.
+  * Added DW_POINTER() macro for casting parameters to (void *).
+  * Added dw_box_unpack() and dw_box_unpack_at_index() for removing items
+    from boxes without destroying them. Also allows removal of padding.
+  * Added GBM (Generalized Bitmap Module) support for OS/2 and eCS for loading
+    Non-OS/2 native file formats. GBM comes with eCS 1.2 and later.
+    It is also available at http://hobbes.nmsu.edu
+  * Added resizing HICNs to 24x24 max size on platforms which do not 
+    do it automatically (Mac and GTK). OS/2 and Windows limit the size.
+  * Added toolbar control support to replace existing bitmap buttons on Windows.
+  * Added dw_filesystem_set_column_title() to fill a hole in localization.   
+  * Added new optional UTF-8 parameter to the key press callback.
+    This is a pointer to a UTF-8 string representing the key pressed.
+    The buffer pointed to is only good for the duration of the callback.
+  * Added UTF-8/Wide string conversion functions for Unicode buffer management.    
+  * Fixed dwindows-config --version not returning the version at all.
+  * Fixed value changed events not working for spinbuttons on OS/2 and Windows.
+  * Fixed issues drawing arcs on GTK2, GTK3 and Mac.
+  * Fixed a crash in the color chooser on Mac running Lion.
+  * Fixed a layout issue with render widgets on OS/2.
+  * Fixed an expose event issue on OS/2.
+  * Fixed an issue with GTK 3.4 due to properties being inherited from the parent.
+  * Fixed issues with bitmap buttons using icon/pointers on OS/2 and Windows.
+  * Fixed an issue with dw_window_destroy() on Mac.
+  * Fixed issues rendering to printer pixmaps on Windows with GDI+ enabled.
+  * Fixed dw_window_set_bitmap_from_data() prefering the resource ID 
+    over the data passed in on most platforms.
+  * Fixed dw_container_delete_row() failing and/or crashing on Mac.
+  * Fixed memory and resource leaks on Windows and Mac.
+  * Fixed incorrect display of status text fields on Mac 10.5 and 10.8.
+  * Fixed compiler warnings on Mac 10.5 and 10.8 by checking selectors directly
+    and removing use of now deprecated APIs.
+  * Fixed incorrect display of textured background non-resizable windows on Mac.
+  * Updated the test program removing deprecated flags and using new ones.
+
+ -- Brian Smith <brian@dbsoft.org>  Sun, 3 Aug 2012 08:00:00 +1000
+
+dwindows (2.3-1) unstable; urgency=low
+
+  * Added dw_menu_delete_item() for removing menu items.
+    Now you can use dw_window_destroy() on menu items handles also.
+  * Added dw_app_dir() which attempts to locate private application data
+    for the current platform.
+  * Added dw_window_set_tooltip() for adding tooltips to most widgets.
+  * Added dw_window_get_preferred_size() for getting the size the system
+    thinks the widget should be, to aid in creating layouts.
+  * Added support for -1 size parameter to the dw_box_pack*() functions to 
+    automatically figure out a suggested size for many controls.
+  * Added automatic window redraw support for OS/2, Windows and Mac.
+  * Added dw_window_set_gravity() for enhanced window placement.
+  * Added DW_GRAV_OBSTACLES support for using system obstacles as gravity
+    anchor points on OS/2, Mac, Windows and GTK3 (3.4 and later).
+  * Added automatic window border detection on GTK.
+    This eliminates the need for the DW_BORDER_* environment variables.
+  * Added Open Watcom compiler support for OS/2 (Thanks Andy Willis).
+  * Added pseudo transparent background widget support on Windows and OS/2.
+    If you set the background color of a widget to DW_RGB_TRANSPARENT...
+    it will attempt to use the background color of the parent.
+    Several types of widgets have this set by default now.
+  * Added faster and less buggy layout engine 2.0 for OS/2, Windows and Mac.
+  * Added auto-positioning on Mac; reimplemented auto-positioning on OS/2.
+  * Added DW_DRAW_NOAA which can be passed to dw_draw_*() API functions
+    that accept the flags parameter to disable anti-aliasing.
+  * Added dw_main_quit() to cause the dw_main() message loop to return.
+  * Added DW_FCF_COMPOSITED to enable Aero Glass effects on Windows 7 and Vista.
+  * Added local autorelease pools on Mac making _dw_pool_drain() unnecessary.
+  * Added deprecated API support for Clang, GCC and Visual C compilers.
+    dw_mdi_new() and dw_menu_item_set_check() have been deprecated.
+  * Fixed auto-sizing top-level windows on Windows; added on OS/2 and Mac.
+  * Fixed bubble help not being displayed on Windows.
+  * Fixed menu bar items remaining highlighted on Mac.
+  * Fixed OS/2 and Windows showing windows during dw_window_set_pos/size().
+  * Fixed OS/2 scrollbox resizing problems when not in the initial position.
+  * Fixed Windows scrollbox maximum position is off by one.
+  * Fixed various GTK3 issues and removed all deprecated functions for 3.4.
+  * Fixed MLE issues on almost all platforms.
+  * Removed broken support for GTK 3.0, GTK 3.2 or later is required now.
+  * Deprecated DW_FCF_NOBYTEALIGN, DW_FCF_SHELLPOSITION, DW_FCF_HORZSCROLL and
+    DW_FCF_VERTSCROLL flags.
+  * Renamed compat.c and compat.h to dwcompat.c and dwcompat.h respectively.
+
+ -- Brian Smith <brian@dbsoft.org>  Sun, 26 Feb 2012 08:00:00 +1000
+
+dwindows (2.2-1) unstable; urgency=low
+
+  * Added printing support via dw_print_new, dw_print_run and dw_print_cancel.
+  * Added pixmap font override support. In prior versions when drawing
+    text to pixmaps the font set on the associated window handle is used.
+    dw_pixmap_set_font() can now override that font setting, and now
+    pixmaps without associated windows are supported and used in printing.
+  * Added dw_pixmap_stretch_bitblt() which allows for scaling during bitblt.
+    This function is necessary largely for very hi-res printer contexts.   
+  * Added dw_mutex_trylock() function to try to obtain a mutex without blocking.
+  * Added DW_TIMEOUT_INFINITE which can now be used with dw_event_wait() in 
+    addition to dw_named_event_wait(), to block until the event is posted.
+  * Added DW_PERCENT_INDETERMINATE which can be passed to dw_percent_set_pos().
+    This should work on all platforms except old versions of Windows. 
+  * Added the subversion revision number as the third Dynamic Windows version 
+    number when building from a subversion source tree.
+  * Added dw_container_set_row_data() and dw_container_change_row_data() macros
+    which just call dw_container_set/change_row_title() but with (void *).
+  * Added dw_container_set_stripe() to set alternating row colors.
+    Currently Mac, Win and GTK are supported.
+  * Added taskbar support on the Mac, GTK (Gnome) and OS/2 (e/XCenter+Systray).
+  * Added PNG/JPG/GIF/TIFF support on Windows via GDI+.
+  * Added support for GdkPixbuf inline images in GTK 2 and 3.
+  * Added dw_draw_arc() function for drawing arcs, ellipses and circles.
+  * Added DW_DRAW_DEFAULT, DW_DRAW_FILL and DW_DRAW_FULL flags which can be passed
+    to dw_draw_arc(), dw_draw_rect() and dw_draw_polygon().  The fill parameter
+    in the latter two has been replaced with flags where DW_DRAW_FILL is the
+    same as TRUE so code using the old scheme should still work unchanged.
+  * Added DW_MENU_AUTO and DW_MENU_POPUP constants for autogenerating menu IDs.
+  * Added dw_debug() function for sending debug messages to the console.
+  * Added path and/or filename support to dw_file_browse() on OS/2, Windows,
+    GTK2, GTK3 and Mac 10.6 or higher.
+  * Added custom calendar widget for OS/2, leaving only the HTML widget missing.
+  * Improved container optimization on Mac, header width now taken into account.
+  * Fixes for incorrect return codes from the dw_event_* functions on Windows.
+  * Fixes for incorrect behavior on key_press callbacks on Mac and Windows.
+  * Fixes for MDI support in GTK3. 
+  * Fixes for problems with multiple sliders/percent widgets in a box on OS/2.
+  * Fixes for lots of GTK3 layout and window positioning issues... 
+    although minimum size issues are still present.
+
+ -- Brian Smith <brian@dbsoft.org>  Sun, 20 Nov 2011 08:00:00 +1000
+
+dwindows (2.1-1) unstable; urgency=low
+
+  * Added support for MacOS 10.7 Lion, version 2.0 had some issues.
+  * Changed the font point size on Windows to be system consistent.
+    Applications setting Windows fonts may need to be adjusted
+    after upgrading to version 2.1. This eliminates an old
+    workaround, but causes old fonts to potentially be wrong.
+  * Fixed issues with the tree widget on Mac not being able to add
+    nodes at the same level with the same name.
+  * Added dw_font_set_default() to set the default text widget font.
+  * Added dw_font_choose() to display a dialog to pick a font.
+  * Added dw_box_pack_at_index() like the other dw_box_pack_*() 
+    functions except packing at arbitrary locations is possible.
+  * Added DW_INT_TO_POINTER/DW_POINTER_TO_INT/etc macros.
+  * Fixed gcc warnings on 64bit systems and others.
+  * Fixes for loading images from files on Windows and GTK3.
+
+ -- Brian Smith <brian@dbsoft.org>  Sat, 30 Jul 2011 08:00:00 +1000
+
+dwindows (2.0-1) unstable; urgency=low
+
+  * Added support for MacOS 10.5 and higher Intel and PPC via Cocoa.
+  * Added initial (unstable) support for GTK version 3.
+  * Added support for Windows themes on XP and higher.
+  * Added scrollbox widgets, which function like boxes but...
+    scrollbars allow you to pack more into them than the visible area.
+  * Added dw_window_get_font() for checking the font used on a widget.
+  * Added dw_container_change_row_title() for changing a row pointer after insert.
+  * Added clipboard support on OS/2.
+  * Added HICN data type for icon handles an changed icon functions to use it.
+  * Added DW_RESOURCE() macro for casting to HICN when using resource IDs.
+  * Added support for borderless buttons except on Windows (DW_BS_NOBORDER).
+  * Changed the return codes of dw_container_setup, dw_filesystem_setup and
+    dw_event_wait().  Please check any code that use these functions.
+  * Changed GTK2+ now supports font name styles like the other platforms.
+  * Enhanced transparent bitblt on OS/2 and Windows.  OS/2 now supports
+    transparent color and Windows now supports 32bit alpha bitblt.
+  * Removed thread limits on Windows and GTK using thread local storage.
+
+ -- Mark Hessling <mark@rexx.org>  Wed, 1 Jun 2011 08:00:00 +1000
+
+dwindows (1.1-1) unstable; urgency=low
+
+  * Initial debian release
+
+ -- Mark Hessling <mark@rexx.org>  Sun, 12 Apr 2009 13:18:35 +1000
+
