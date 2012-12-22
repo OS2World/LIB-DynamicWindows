@@ -1,0 +1,55 @@
+
+# Dynamic Windows MINGW Makefile
+
+CC = gcc
+RM = del /f
+
+DEFS =
+LIBS =
+
+# Had to disable -Wunused-value due to every Win32 macro generating this warning...
+# GCC has marked this as  WONTFIX http://gcc.gnu.org/bugzilla/show_bug.cgi?id=24900
+CFLAGS = -O -g -DMSVC -DWIN32 -D__WIN32__ -DGDIPLUS -DUNICODE -D_UNICODE -DISOLATION_AWARE_ENABLED=1 -I./win -I. -I./platform -Wall -Wno-unused-value -mthreads -o $(@)
+LDFLAGS = -shared -mwindows -mthreads -lcomctl32 -lole32 -loleaut32 -luserenv -lmsimg32 -lgdiplus
+
+COMPATOBJECTS = dwcompat.o dirent.o
+OBJECTS = dw.o XBrowseForFolder.o
+
+VPATH=../ ../win
+
+all: dw.dll dwcompat.dll dwtest.exe
+
+dw.dll:  $(OBJECTS) win/dw-mingw.def
+	$(CC) $(CFLAGS) $(DEFS) -o dw.dll $(OBJECTS) $(LDFLAGS) \
+	-Wl,--out-implib,dw.a -Wl,-Map,dw.dll.map -Wl,--cref  -Wl,--enable-stdcall-fixup win/dw-mingw.def 
+
+dwcompat.dll:  $(COMPATOBJECTS) win/dwcompat-mingw.def
+	$(CC) $(CFLAGS) $(DEFS) -o dwcompat.dll $(COMPATOBJECTS) $(LDFLAGS) -lwsock32 \
+  -Wl,--out-implib,dwcompat.a -Wl,-Map,dwcompat.dll.map -Wl,--cref  -Wl,--enable-stdcall-fixup win/dwcompat-mingw.def 
+
+dwtest.exe: dwtest.o dw.a dwcompat.a
+	$(CC) $(CFLAGS) -o dwtest.exe dwtest.o dw.a dwcompat.a
+
+clean:
+	$(RM) *.obj *.o *.lib *.res *~ dwtest.exe dw.dll dwcompat.dll SVN.REV
+
+dw.o: win/dw.c
+	$(CC) $(CFLAGS) -DBUILD_DLL -c $<	
+
+XBrowseForFolder.o: win/XBrowseForFolder.cpp
+	$(CC) $(CFLAGS) -DBUILD_DLL -c $<	
+
+dwcompat.o: dwcompat.c
+	$(CC) $(CFLAGS) -DBUILD_DLL -c $<	
+
+dirent.o: win/dirent.c
+	$(CC) $(CFLAGS) -DBUILD_DLL -c $<	
+
+dwtest.o: dwtest.c
+	$(CC) $(CFLAGS) -c $<	
+
+DEPS := $(wildcard *.d)
+ifneq ($(DEPS),)
+include $(DEPS)
+endif
+
